@@ -1,0 +1,14 @@
+libopf is a PSL1GHT FTP library designed specifically for the PS3.
+libopf is licensed under the LGPL version 3.
+libopf was created and currently maintained by jjolano.
+
+For developer use only.
+PSL1GHT is required for compilation.
+
+Run `make && make install` to compile and install libopf's header file and static library.
+
+When linking with your program, you have to include the libraries:
+- libnet
+- libsysmodule
+
+See the header file for usage.
