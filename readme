@@ -1,6 +1,6 @@
 PS3SDK and tools from PS3DEV and more.
 
-Containt:
+Containt développement environnement:
 .ps3keys
 .ps3librairies
 .ps3toolchain
@@ -8,4 +8,18 @@ Containt:
 .ps3tools v3
 .psl1ght v2
 
+Containt additonal libraries:
+.libopf
+.ps3soundlib
+.rsxgl
+.sdl-libs
+
+Containt some sources:
+.norsx
+.openps3ftp
+.ps3print
+.psseismograph
+
 You can install it from "openDevScript" available on my github.
+
+See "About" for more information.
