@@ -1,0 +1,23 @@
+Version 1.1
+* Merged changes from Korben @ #Psl1ght in irc to make it work with PSL1ght 2.
+
+Version 1.0
+* Added transparency to fonts, now the Alpha channel is supported.
+
+Version  0.6
+* Added Font Arial (PS3Printer::ARIAL)
+** Sizes: 9,10,11,12,14,16,18,20,22,24,26,28,36,48,72 
+* Added Font Bitstream Vera Sans Mono  (PS3Printer::BITSTREAMVERASANSMONO)
+** Sizes: 8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72
+* Made Arial 14 the new default font.
+* Refactored all the code, now is way cleaner and readable.
+
+Version 0.5
+* Added Support for different kinds of fonts.
+* Added font Arial 8.
+* Added font Segoe Script 16. (PS3Printer::SEGOESCRIPT)
+
+Version 0.01
+* Removed Dependencies for PSL1GHT
+* Renamed Debug class for PS3Printer.
+* Changed FontColor functions to SetFontColor.
