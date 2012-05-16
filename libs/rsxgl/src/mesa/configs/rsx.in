@@ -1,0 +1,34 @@
+#-*-Makefile-*-
+include $(TOP)/configs/default
+
+CONFIG_NAME = rsx
+
+CC = @ppu_CC@
+CXX = @ppu_CXX@
+DEFINES = -DUSE_MGL_NAMESPACE -DPIPE_OS_UNIX -DFFS_DEFINED -Dffs=__builtin_ffs -Dffsll=__builtin_ffsll
+MKLIB = $(SHELL) @abs_top_builddir@/src/mesa/mklib-rsx
+
+BUILD_CC = @CC@
+BUILD_CXX = @CXX@
+BUILD_DEFINES = -D_GNU_SOURCE -D_DARWIN_C_SOURCE
+BUILD_APP_CXX = @CXX@
+
+#OPT_FLAGS = -O3 -mcpu=603 -fsigned-char -funroll-loops
+
+RSX_INCLUDES = -I@abs_top_srcdir@/src/mesa/src/rsx/include
+
+CFLAGS = -Wall -Wmissing-prototypes -Wdeclaration-after-statement \
+	-Wpointer-arith $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) \
+	$(DEFINES) $(ASM_FLAGS) -std=c99 -ffast-math $(RSX_INCLUDES)
+
+CXXFLAGS = -Wall -Wpointer-arith $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) \
+	$(DEFINES) $(RSX_INCLUDES)
+
+SRC_DIRS = glsl mapi/glapi mesa gallium
+GLU_DIRS = 
+DRIVER_DIRS =
+DRI_DIRS =
+GALLIUM_DIRS = auxiliary drivers
+GALLIUM_DRIVERS_DIRS = 
+
+PYTHON2 = @PYTHON@

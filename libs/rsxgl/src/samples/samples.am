@@ -1,0 +1,124 @@
+CC = @ppu_CC@
+CXX = @ppu_CXX@
+AR = @ppu_AR@
+RANLIB = @ppu_RANLIB@
+AS		=	@ppu_AS@
+STRIP		=	@ppu_STRIP@
+CXXLD = PSL1GHT="@PSL1GHT@" "@ppu_CXX@"
+XXD = @XXD@
+
+PSL1GHT_CPPFLAGS = @PSL1GHT_CPPFLAGS@
+PSL1GHT_LDFLAGS = @PSL1GHT_LDFLAGS@
+
+define bin2o
+	$(PS3DEV)/bin/bin2s -a 64 $< | $(AS) -o $(@)
+	echo "extern const uint8_t" `(echo $(<F) | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`"_end[];" > `(echo $(<F) | tr . _)`.h
+	echo "extern const uint8_t" `(echo $(<F) | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`"[];" >> `(echo $(<F) | tr . _)`.h
+	echo "extern const uint32_t" `(echo $(<F) | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`_size";" >> `(echo $(<F) | tr . _)`.h
+endef
+
+SELF		:= @SELF@
+SELF_NPDRM	:= @SELF_NPDRM@
+SFO			:= @SFO@
+PKG			:= @PKG@
+SPRX		:= @SPRX@
+CGC		:= @CGC@
+LFTP		:= @LFTP@
+
+SFOXML		:= @top_srcdir@/src/samples/sfo.xml
+ICON0		:= @top_srcdir@/src/samples/brewcrab.png
+
+local_NV40ASM = $(top_builddir)/src/cgcomp/nv40asm
+NV40C = $(top_builddir)/src/cgcomp/nv40c
+
+SUFFIXES = .bin _bin.o _bin.h .png _png.o _png.h .vcg .fcg .vert .frag _vpo.o _fpo.o _vpo.h _fpo.h .vpo .fpo
+
+%.vpo: %.vcg
+	@echo "[Compiling Cg vertex program] $(notdir $<)"
+	@CGC=$(CGC) NV40ASM=$(local_NV40ASM) $(NV40C) -v -x cg -o $@ $^
+
+%.fpo: %.fcg
+	@echo "[Compiling Cg fragment program] $(notdir $<)"
+	@CGC=$(CGC) NV40ASM=$(local_NV40ASM) $(NV40C) -f -x cg -o $@ $^
+
+%.vpo: %.vert
+	@echo "[Compiling GLSL vertex program] $(notdir $<)"
+	@CGC=$(CGC) NV40ASM=$(local_NV40ASM) $(NV40C) -v -x glsl -o $@ $^
+
+%.fpo: %.frag
+	@echo "[Compiling GLSL fragment program] $(notdir $<)"
+	@CGC=$(CGC) NV40ASM=$(local_NV40ASM) $(NV40C) -f -x glsl -o $@ $^
+
+%_vert.h: %.vert
+	@echo Generating $@ from $<
+	@pushd $(abs_srcdir); rm -f $(abs_builddir)/$@; $(XXD) -i $(notdir $<) > $(abs_builddir)/$@; popd
+
+%_frag.h: %.frag
+	@echo Generating $@ from $<
+	@pushd $(abs_srcdir); rm -f $(abs_builddir)/$@; $(XXD) -i $(notdir $<) > $(abs_builddir)/$@; popd
+
+%.self: %.elf
+	@echo "[SELF] $@"
+	@$(STRIP) $< 
+	@$(SPRX) $<
+	@$(SELF) $< $@
+
+%.pkg: %.self
+	@echo "[PKG] $(notdir $@)"
+	@rm -rf $(builddir)/pkg
+	@mkdir -p $(builddir)/pkg
+	@mkdir -p $(builddir)/pkg/USRDIR
+	@cp $(ICON0) $(builddir)/pkg/ICON0.PNG
+	@$(SELF_NPDRM) $(basename $(notdir $<)).elf $(builddir)/pkg/USRDIR/EBOOT.BIN $(CONTENTID) >> /dev/null
+	@$(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(builddir)/pkg/PARAM.SFO
+	@if test -n $(PKGFILES) -a -d $(PKGFILES); then cp -rf $(PKGFILES)/* $(builddir)/pkg/; fi
+	@$(PKG) --contentid $(CONTENTID) $(builddir)/pkg/ $@ >> /dev/null
+
+%_bin.o: %.bin
+	@echo "[bin2o]: $<"
+	@$(bin2o)
+
+%_bin.h: %_bin.o
+	@echo "$<"
+
+%_png.o: %.png
+	@echo "[bin2o]: $<"
+	@$(bin2o)
+
+%_png.h: %_png.o
+	@echo "$<"
+
+%_vpo.o: %.vpo
+	@echo "$(notdir $<)"
+	@$(bin2o)
+
+%_vpo.h: %_vpo.o
+	@echo "$<"
+
+%_fpo.o: %.fpo
+	@echo "$(notdir $<)"
+	@$(bin2o)
+
+%_fpo.h: %_fpo.o
+	@echo "$<"
+
+transfer: pkg
+	@if test -n "$(RSXGL_TARGET_IP)" -a -n "$(LFTP)" -a -f "$(abs_builddir)/pkg/USRDIR/EBOOT.BIN"; then echo "Transferring to $(RSXGL_TARGET_IP)";$(LFTP) -e "cd /dev_hdd0/game/$(APPID)/USRDIR/;put $(abs_builddir)/pkg/USRDIR/EBOOT.BIN;exit;" -u root,openbox $(RSXGL_TARGET_IP); fi
+
+vertex_shaders = $(filter %.vert,$(notdir $(1)))
+fragment_shaders = $(filter %.frag,$(notdir $(1)))
+
+vertex_shader_objs = $(1:.vert=_vpo.o)
+fragment_shader_objs = $(1:.frag=_fpo.o)
+
+vertex_shader_headers = $(1:.vert=_vert.h)
+fragment_shader_headers = $(1:.frag=_frag.h)
+
+shader_objs = $(call vertex_shader_objs,$(call vertex_shaders,$(1))) $(call fragment_shader_objs,$(call fragment_shaders,$(1)))
+shader_headers = $(call vertex_shader_headers,$(call vertex_shaders,$(1))) $(call fragment_shader_headers,$(call fragment_shaders,$(1)))
+
+png_images = $(filter %.png,$(notdir $(1)))
+png_image_objs = $(1:.png=_png.o)
+png_image_headers = $(1:.png=_png.h)
+image_objs = $(call png_image_objs,$(call png_images,$(1)))
+image_headers = $(call png_image_headers,$(call png_images,$(1)))

@@ -1,0 +1,86 @@
+diff --git src/glsl/Makefile src/glsl/Makefile
+index d9ecbc8..a154470 100644
+--- src/glsl/Makefile
++++ src/glsl/Makefile
+@@ -28,7 +28,7 @@ CXX_SOURCES = \
+ LIBS = \
+ 	$(TOP)/src/glsl/libglsl.a
+ 
+-APPS = glsl_compiler glsl_test glcpp/glcpp
++#APPS = glsl_compiler glsl_test glcpp/glcpp
+ 
+ GLSL2_C_SOURCES = \
+ 	../mesa/program/hash_table.c \
+@@ -108,6 +108,7 @@ depend: $(ALL_SOURCES) Makefile
+ clean: clean-dricore
+ 	rm -f $(GLCPP_OBJECTS) $(GLSL2_OBJECTS) $(TEST_OBJECTS) $(OBJECTS) lib$(LIBNAME).a depend depend.bak builtin_function.cpp builtin_function.o builtin_stubs.o builtin_compiler
+ 	-rm -f $(APPS)
++	make -f Makefile-builtins clean
+ 
+ clean-dricore:
+ 	-rm -f $(OBJECTS_DRICORE) $(TOP)/$(LIB_DIR)/libglsl.so libglsl.so
+@@ -162,8 +163,11 @@ glcpp/glcpp-lex.c: glcpp/glcpp-lex.l
+ glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
+ 	$(BISON) -v -o "$@" --defines=glcpp/glcpp-parse.h $<
+ 
+-builtin_compiler: $(GLSL2_OBJECTS) $(OBJECTS) builtin_stubs.o
+-	$(APP_CXX) $(INCLUDES) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(GLSL2_OBJECTS) builtin_stubs.o -o $@
++#builtin_compiler: $(GLSL2_OBJECTS) $(OBJECTS) builtin_stubs.o
++#	$(APP_CXX) $(INCLUDES) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(GLSL2_OBJECTS) builtin_stubs.o -o $@
++
++builtin_compiler:
++	@make -f Makefile-builtins builtin_compiler
+ 
+ builtin_function.cpp: builtins/profiles/* builtins/ir/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py builtin_compiler
+ 	@echo Regenerating builtin_function.cpp...
+diff --git src/mesa/main/querymatrix.c src/mesa/main/querymatrix.c
+index 2843d55..89caa3b 100644
+--- src/mesa/main/querymatrix.c
++++ src/mesa/main/querymatrix.c
+@@ -71,9 +71,9 @@ fpclassify(double x)
+ }
+ 
+ #elif defined(__APPLE__) || defined(__CYGWIN__) || defined(__FreeBSD__) || \
+-     defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || \
+-     (defined(__sun) && defined(__C99FEATURES__)) || defined(__MINGW32__) || \
+-     (defined(__sun) && defined(__GNUC__)) || defined(ANDROID) || defined(__HAIKU__)
++  defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__lv2ppu__) || \
++  (defined(__sun) && defined(__C99FEATURES__)) || defined(__MINGW32__) || \
++  (defined(__sun) && defined(__GNUC__)) || defined(ANDROID) || defined(__HAIKU__)
+ 
+ /* fpclassify is available. */
+ 
+diff --git src/glsl/builtins/tools/generate_builtins.py src/glsl/builtins/tools/generate_builtins.py
+index 72d12bb..2214f5b 100755
+--- src/glsl/builtins/tools/generate_builtins.py
++++ src/glsl/builtins/tools/generate_builtins.py
+@@ -152,13 +152,15 @@ _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type);
+ gl_shader *
+ read_builtins(GLenum target, const char *protos, const char **functions, unsigned count)
+ {
+-   struct gl_context fakeCtx;
+-   fakeCtx.API = API_OPENGL;
+-   fakeCtx.Const.GLSLVersion = 130;
+-   fakeCtx.Extensions.ARB_ES2_compatibility = true;
++   struct gl_context * fakeCtx = (struct gl_context *)calloc(1,sizeof(gl_context));
++   memset(fakeCtx,0,sizeof(*fakeCtx));
++
++   fakeCtx -> API = API_OPENGL;
++   fakeCtx -> Const.GLSLVersion = 130;
++   fakeCtx -> Extensions.ARB_ES2_compatibility = true;
+    gl_shader *sh = _mesa_new_shader(NULL, 0, target);
+    struct _mesa_glsl_parse_state *st =
+-      new(sh) _mesa_glsl_parse_state(&fakeCtx, target, sh);
++      new(sh) _mesa_glsl_parse_state(fakeCtx, target, sh);
+ 
+    st->language_version = 130;
+    st->symbols->language_version = 130;
+@@ -191,6 +193,8 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
+    reparent_ir(sh->ir, sh);
+    delete st;
+ 
++free(fakeCtx);
++
+    return sh;
+ }
+ """
