@@ -1,0 +1,20 @@
+About libs:
+
+Original libopf from:
+https://github.com/jjolano
+needed to compile correctly openps3ftp
+
+Original ps3soundlib from:
+https://github.com/wargio/ps3soundlib
+
+Original rsxgl from:
+https://github.com/gzorin/RSXGL
+
+Original sdl-libs from:
+https://github.com/zeldin/SDL_PSL1GHT_Libs
+
+All credits to:
+jjolano
+wargio
+gzorin
+zeldin
