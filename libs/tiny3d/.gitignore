@@ -1,0 +1,17 @@
+*.swp
+*.a
+*.o
+*.elf
+*.self
+*.pkg
+lib/build/
+libfont/build/
+samples/fonts/build/
+samples/fonts_from_ttf/build/
+samples/ps3loadx/build/
+samples/spheres3D/build/
+samples/sprites2D/build/
+samples/surfaces/build/
+samples/tiny3d_lists/build/
+samples/userviewport/build/
+samples/yuv/build/
