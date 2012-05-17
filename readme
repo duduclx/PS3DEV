@@ -13,12 +13,14 @@ Containt additonal libraries:
 .ps3soundlib
 .rsxgl
 .sdl-libs
+.tiny3D
 
 Containt some sources:
 .norsx
 .openps3ftp
 .ps3print
 .psseismograph
+.tiny3D samples
 
 You can install it from "openDevScript" available on my github.
 
